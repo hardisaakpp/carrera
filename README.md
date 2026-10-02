@@ -11,9 +11,26 @@ agente que busca, clasifica y prepara postulaciones a empleos.
 | 2 | Captura de ofertas (Remotive, RemoteOK, We Work Remotely), texto plano, deduplicación, intervalo de 6 h | hecha |
 | 3 | Ranking: reglas duras + embeddings bge-m3 + tecnologías en común, con explicación por oferta | hecha (falta evaluar con tus etiquetas) |
 | 4 | CV adaptado por oferta: el modelo solo elige y ordena, una compuerta verifica contra el YAML | hecha |
-| 5 | Postulación asistida: borrador (CV + carta), seguimiento por estados, nunca envía | hecha (sin interfaz web aún) |
+| 5 | Postulación asistida: borrador (CV + carta), seguimiento por estados, nunca envía | hecha |
+| 6 | Interfaz web: editor de hoja de vida con PDF, ofertas ordenadas, postulaciones | hecha |
 
-## Uso
+## Interfaz web
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'   # una vez
+(cd web && npm install)                                        # una vez
+./dev.sh                                                       # API en :8920 y web en http://localhost:3010
+```
+
+- **Hoja de vida:** formulario por secciones con vista previa en PDF. Guarda en `data/cv.local.yaml`.
+- **Ofertas:** lista ordenada por afinidad, con las tecnologías en común y el enlace a la fuente. Aquí defines las
+  reglas que descartan ofertas y pulsas «Preparar postulación». La primera vez calcula la afinidad en segundo plano
+  (unos minutos para ~120 ofertas); la pantalla se actualiza sola.
+- **Postulaciones:** carta editable, PDF adaptado y los estados. Nada se envía desde aquí.
+- La API escucha solo en `127.0.0.1` y no tiene cuentas: es una herramienta personal. La web habla únicamente con
+  su propio servidor, que reenvía `/api` a la API.
+
+## Uso por línea de comandos
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'

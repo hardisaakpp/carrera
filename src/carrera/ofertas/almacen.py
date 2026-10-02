@@ -25,7 +25,7 @@ class Almacen:
     def __init__(self, ruta: Path | str = "data/ofertas.db") -> None:
         if ruta != ":memory:":
             Path(ruta).parent.mkdir(parents=True, exist_ok=True)
-        self.db = sqlite3.connect(ruta)
+        self.db = sqlite3.connect(ruta, check_same_thread=False)
         self.db.executescript(_ESQUEMA)
 
     def puede_consultar(self, fuente: str, ahora: float | None = None) -> bool:

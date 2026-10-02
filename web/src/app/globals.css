@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+:root {
+  --background: oklch(0.985 0.003 200);
+  --foreground: oklch(0.2 0.02 220);
+  --card: oklch(1 0 0);
+  --muted: oklch(0.96 0.005 200);
+  --muted-foreground: oklch(0.5 0.02 220);
+  --border: oklch(0.91 0.008 210);
+  --primary: oklch(0.5 0.1 192);
+  --primary-foreground: oklch(0.99 0 0);
+  --destructive: oklch(0.55 0.2 27);
+  --sidebar: oklch(0.2 0.03 225);
+  --sidebar-foreground: oklch(0.92 0.01 210);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.16 0.02 225);
+    --foreground: oklch(0.95 0.005 210);
+    --card: oklch(0.2 0.025 225);
+    --muted: oklch(0.25 0.025 225);
+    --muted-foreground: oklch(0.7 0.02 215);
+    --border: oklch(0.3 0.03 225);
+    --primary: oklch(0.76 0.12 192);
+    --primary-foreground: oklch(0.15 0.02 225);
+    --destructive: oklch(0.7 0.19 25);
+    --sidebar: oklch(0.13 0.02 225);
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-destructive: var(--destructive);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --font-sans: var(--font-geist-sans);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}

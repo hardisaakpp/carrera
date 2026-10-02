@@ -6,7 +6,6 @@ import hashlib
 import json
 import math
 import os
-import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Sequence
@@ -16,29 +15,24 @@ MODELO = os.environ.get("CARRERA_MODELO_EMBEDDINGS", "bge-m3")
 OLLAMA = os.environ.get("CARRERA_OLLAMA_URL", "http://localhost:11434")
 
 
-def _con_reintentos(req: urllib.request.Request, intentos: int = 3) -> list[list[float]]:
-    """Ollama devuelve 500 transitorios al intercambiar modelos en la GPU."""
-    for n in range(intentos):
-        try:
-            with urllib.request.urlopen(req, timeout=120) as r:  # noqa: S310
-                return json.loads(r.read())["embeddings"]
-        except urllib.error.HTTPError:
-            if n == intentos - 1:
-                raise
-            time.sleep(2 * (n + 1))
-    raise AssertionError("inalcanzable")
+def _pedir(textos: Sequence[str], cpu: bool) -> list[list[float]]:
+    cuerpo = json.dumps({"model": MODELO, "input": list(textos), "keep_alive": "10m",
+                         "options": {"num_gpu": 0} if cpu else {}}).encode()
+    req = urllib.request.Request(f"{OLLAMA}/api/embed", cuerpo, {"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=300) as r:  # noqa: S310
+        return json.loads(r.read())["embeddings"]
 
 
 def ollama(textos: Sequence[str]) -> list[list[float]]:
+    """GPU primero (rápido). Con bge-m3 algunos textos cortos dan NaN en fp16 y Ollama responde 500:
+    ese lote se repite en CPU, que es más lento pero exacto."""
     vectores: list[list[float]] = []
-    for i in range(0, len(textos), 4):
-        cuerpo = json.dumps({"model": MODELO, "input": list(textos[i:i + 4]),
-                             "keep_alive": "10m",
-                             # En CPU: en GPU algunos textos cortos dan NaN en bge-m3 (fp16).
-                             "options": {"num_gpu": 0}}).encode()
-        req = urllib.request.Request(f"{OLLAMA}/api/embed", cuerpo,
-                                     {"Content-Type": "application/json"})
-        vectores.extend(_con_reintentos(req))
+    for i in range(0, len(textos), 8):
+        lote = textos[i:i + 8]
+        try:
+            vectores.extend(_pedir(lote, cpu=False))
+        except urllib.error.HTTPError:
+            vectores.extend(_pedir(lote, cpu=True))
     return vectores
 
 
@@ -54,13 +48,22 @@ class ConCache:
         self.base, self.db = base, db
         db.execute("CREATE TABLE IF NOT EXISTS vectores (h TEXT PRIMARY KEY, v TEXT NOT NULL)")
 
+    @staticmethod
+    def _clave(texto: str) -> str:
+        return hashlib.sha256(f"{MODELO}\n{texto}".encode()).hexdigest()
+
+    def tiene(self, texto: str) -> bool:
+        return self.db.execute("SELECT 1 FROM vectores WHERE h=?", (self._clave(texto),)).fetchone() is not None
+
     def __call__(self, textos: Sequence[str]) -> list[list[float]]:
-        claves = [hashlib.sha256(f"{MODELO}\n{t}".encode()).hexdigest() for t in textos]
+        claves = [self._clave(t) for t in textos]
         hallados = {h: json.loads(v) for h, v in self.db.execute(
             f"SELECT h,v FROM vectores WHERE h IN ({','.join('?' * len(claves))})", claves)} if claves else {}
         faltan = [(h, t) for h, t in zip(claves, textos) if h not in hallados]
-        if faltan:
-            for (h, _), v in zip(faltan, self.base([t for _, t in faltan])):
+        # Por tandas y guardando cada una: si la corrida se interrumpe, lo ya calculado no se pierde.
+        for i in range(0, len(faltan), 16):
+            tanda = faltan[i:i + 16]
+            for (h, _), v in zip(tanda, self.base([t for _, t in tanda])):
                 hallados[h] = v
                 self.db.execute("INSERT OR REPLACE INTO vectores VALUES (?,?)", (h, json.dumps(v)))
             self.db.commit()
