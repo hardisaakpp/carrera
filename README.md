@@ -8,7 +8,7 @@ agente que busca, clasifica y prepara postulaciones a empleos.
 | Fase | Contenido | Estado |
 |---|---|---|
 | 1 | Esquema del CV, plantilla LaTeX, compilación a PDF en Docker | hecha |
-| 2 | Captura de ofertas (fuentes con API/RSS), normalización y deduplicación | pendiente |
+| 2 | Captura de ofertas (Remotive, RemoteOK, We Work Remotely), texto plano, deduplicación, intervalo de 6 h | hecha |
 | 3 | Ranking: embeddings (bge-m3) + reglas duras + explicación por oferta, medido con un set etiquetado | pendiente |
 | 4 | CV adaptado por oferta (el modelo reordena y resalta, **nunca inventa**) | pendiente |
 | 5 | Postulación asistida: borrador listo, la persona confirma y envía | pendiente |
@@ -56,3 +56,19 @@ Aprendidas construyendo Xia (el asistente de Stockline):
 Bucle de herramientas con validación, embeddings bge-m3 + pgvector, Ollama local,
 cuota/auditoría y el arnés de evaluación. Es un producto aparte: Xia contesta
 sobre documentación; este agente actúa sobre ofertas.
+
+## Ofertas (fase 2)
+
+```bash
+.venv/bin/carrera ofertas            # consulta las fuentes (máx. 1 vez cada 6 h por fuente)
+.venv/bin/carrera ofertas --forzar
+```
+
+- Solo feeds/APIs públicos, por https y con tope de tamaño. Cada oferta conserva su URL
+  original: las tres fuentes exigen enlazar de vuelta y citarlas como origen. Mostrar
+  la fuente en cualquier interfaz es obligatorio.
+- El HTML de cada oferta se convierte a texto plano (sin scripts ni marcado).
+- La misma vacante en varias fuentes colapsa por empresa + título normalizados.
+- Un fallo de una fuente no detiene a las demás. Se guardan en `data/ofertas.db` (SQLite, no versionada).
+- LinkedIn e Indeed no tienen acceso permitido: quedarían como entrada manual (pegar el texto).
+- RemoteOK no filtra por categoría, así que entran ofertas ajenas al perfil; las filtra el ranking (fase 3).

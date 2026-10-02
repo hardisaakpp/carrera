@@ -33,7 +33,25 @@ def compilar(tex: Path) -> Path:
     return tex.with_suffix(".pdf")
 
 
+def ofertas(argv: list[str]) -> int:
+    from .ofertas.almacen import Almacen
+    from .ofertas.captura import capturar
+
+    p = argparse.ArgumentParser(prog="carrera ofertas")
+    p.add_argument("--db", default="data/ofertas.db")
+    p.add_argument("--forzar", action="store_true", help="ignorar el intervalo de 6 h")
+    args = p.parse_args(argv)
+    almacen = Almacen(args.db)
+    for fuente, estado in capturar(almacen, forzar=args.forzar).items():
+        print(f"{fuente}: {estado}")
+    print(f"total guardadas: {len(almacen.todas())}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] == ["ofertas"]:
+        return ofertas(argv[1:])
     p = argparse.ArgumentParser(prog="carrera")
     p.add_argument("cv", type=Path, help="YAML con la hoja de vida")
     p.add_argument("--salida", type=Path, default=Path("build"))
