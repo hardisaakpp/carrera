@@ -9,7 +9,7 @@ agente que busca, clasifica y prepara postulaciones a empleos.
 |---|---|---|
 | 1 | Esquema del CV, plantilla LaTeX, compilación a PDF en Docker | hecha |
 | 2 | Captura de ofertas (Remotive, RemoteOK, We Work Remotely), texto plano, deduplicación, intervalo de 6 h | hecha |
-| 3 | Ranking: embeddings (bge-m3) + reglas duras + explicación por oferta, medido con un set etiquetado | pendiente |
+| 3 | Ranking: reglas duras + embeddings bge-m3 + tecnologías en común, con explicación por oferta | hecha (falta evaluar con tus etiquetas) |
 | 4 | CV adaptado por oferta (el modelo reordena y resalta, **nunca inventa**) | pendiente |
 | 5 | Postulación asistida: borrador listo, la persona confirma y envía | pendiente |
 
@@ -72,3 +72,27 @@ sobre documentación; este agente actúa sobre ofertas.
 - Un fallo de una fuente no detiene a las demás. Se guardan en `data/ofertas.db` (SQLite, no versionada).
 - LinkedIn e Indeed no tienen acceso permitido: quedarían como entrada manual (pegar el texto).
 - RemoteOK no filtra por categoría, así que entran ofertas ajenas al perfil; las filtra el ranking (fase 3).
+
+## Ranking (fase 3)
+
+```bash
+.venv/bin/carrera ranking data/ejemplo.yaml --prefs data/preferencias.ejemplo.yaml --top 10
+.venv/bin/python eval/run.py          # precisión contra ofertas etiquetadas
+```
+
+- **Reglas duras** (`Preferencias`): títulos/textos excluidos, ubicaciones, tecnologías obligatorias.
+  Una oferta descartada conserva el motivo.
+- **Puntaje 0-100** = 60 % afinidad semántica (coseno CV↔oferta, bge-m3) + 40 % tecnologías
+  del CV mencionadas en la oferta. La explicación (qué coincide) sale de datos, no de un modelo.
+- Los vectores se guardan en caché (SQLite) por hash del texto.
+- Los embeddings corren en **CPU** (`num_gpu: 0`): con la GPU, bge-m3 devolvió NaN (HTTP 500)
+  para textos cortos como "Senior Java Developer…". Aplica a cualquier proyecto que use
+  bge-m3 con este Ollama.
+
+**Medición.** En `eval/etiquetadas.yaml` (24 ofertas sintéticas escritas por mí) acierta
+precision@10 = 10/10, pero el margen es mínimo (peor relevante 58.7, mejor irrelevante 58.6)
+y el conjunto es optimista: no sustituye a ofertas reales etiquetadas por ti.
+
+**Limitación conocida.** Ofertas con una lista genérica de tecnologías (p. ej. "Senior Data Scientist"
+de Lemon.io, que enumera .NET, Next.js, etc.) puntúan alto por coincidencias que no describen el puesto.
+Solución prevista: ponderar más título y etiquetas que el cuerpo, y calibrar con etiquetas reales.

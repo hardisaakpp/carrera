@@ -48,10 +48,37 @@ def ofertas(argv: list[str]) -> int:
     return 0
 
 
+def ranking(argv: list[str]) -> int:
+    from .ofertas.almacen import Almacen
+    from .ranking.embeddings import ConCache, ollama
+    from .ranking.preferencias import Preferencias
+    from .ranking.ranking import ordenar
+
+    p = argparse.ArgumentParser(prog="carrera ranking")
+    p.add_argument("cv", type=Path)
+    p.add_argument("--prefs", type=Path, help="YAML de reglas duras")
+    p.add_argument("--db", default="data/ofertas.db")
+    p.add_argument("--top", type=int, default=15)
+    args = p.parse_args(argv)
+    pref = Preferencias.model_validate(yaml.safe_load(args.prefs.read_text("utf-8"))) if args.prefs \
+        else Preferencias()
+    almacen = Almacen(args.db)
+    resultados = ordenar(cargar(args.cv), almacen.todas(), pref, ConCache(ollama, almacen.db))
+    vivas = [r for r in resultados if r.excluida is None]
+    print(f"{len(vivas)} candidatas, {len(resultados) - len(vivas)} descartadas por reglas")
+    for r in vivas[: args.top]:
+        o = r.oferta
+        print(f"{r.puntaje:5.1f}  {o.titulo} - {o.empresa}  [{o.fuente}]\n       "
+              f"coinciden: {', '.join(r.coinciden) or '-'}\n       {o.url}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ["ofertas"]:
         return ofertas(argv[1:])
+    if argv[:1] == ["ranking"]:
+        return ranking(argv[1:])
     p = argparse.ArgumentParser(prog="carrera")
     p.add_argument("cv", type=Path, help="YAML con la hoja de vida")
     p.add_argument("--salida", type=Path, default=Path("build"))

@@ -1,0 +1,131 @@
+- titulo: Senior Backend Engineer (.NET)
+  descripcion: Build REST APIs in C# and .NET with SQL Server. Docker, CI/CD, clean
+    architecture.
+  etiquetas:
+  - dotnet
+  - backend
+  relevante: true
+- titulo: Software Engineer, Payments API
+  descripcion: Design and operate payment APIs. C#, SQL Server, Docker, observability.
+  etiquetas:
+  - backend
+  - api
+  relevante: true
+- titulo: Full Stack Developer (Next.js + .NET)
+  descripcion: React and Next.js frontend with TypeScript; .NET backend; SQL.
+  etiquetas:
+  - typescript
+  - react
+  relevante: true
+- titulo: Backend Developer
+  descripcion: Python and SQL services, REST APIs, Docker deployments, automated tests.
+  etiquetas:
+  - python
+  - backend
+  relevante: true
+- titulo: API Platform Engineer
+  descripcion: 'Own our internal API platform: .NET, Docker, SQL Server, performance
+    tuning of slow queries.'
+  etiquetas:
+  - api
+  relevante: true
+- titulo: TypeScript Engineer
+  descripcion: Next.js apps with TypeScript, REST integration, testing with Playwright.
+  etiquetas:
+  - typescript
+  - nextjs
+  relevante: true
+- titulo: Integration Engineer (ERP)
+  descripcion: Integrate ERP systems via REST APIs. .NET or Python, SQL, queues.
+  etiquetas:
+  - backend
+  - integration
+  relevante: true
+- titulo: Junior Backend Developer
+  descripcion: C# .NET APIs, SQL databases, Docker basics. Mentorship provided.
+  etiquetas:
+  - dotnet
+  relevante: true
+- titulo: DevOps-minded Backend Engineer
+  descripcion: Backend in Python or C#, Docker, CI pipelines, SQL tuning.
+  etiquetas:
+  - backend
+  - docker
+  relevante: true
+- titulo: Software Developer, Internal Tools
+  descripcion: 'Build internal tools: Next.js, TypeScript, .NET APIs, SQL Server.'
+  etiquetas:
+  - fullstack
+  relevante: true
+- titulo: Enterprise Sales Development Representative
+  descripcion: Outbound prospecting, cold calls, quota carrying sales role.
+  etiquetas:
+  - sales
+  relevante: false
+- titulo: Senior iOS Engineer
+  descripcion: Swift, SwiftUI and UIKit native iOS apps.
+  etiquetas:
+  - swift
+  - ios
+  relevante: false
+- titulo: Product Designer
+  descripcion: Figma, user research, design systems for web products.
+  etiquetas:
+  - design
+  relevante: false
+- titulo: Machine Learning Researcher
+  descripcion: PhD in ML, PyTorch, publish papers, large-scale model training.
+  etiquetas:
+  - ml
+  relevante: false
+- titulo: Customer Support Specialist
+  descripcion: Answer tickets, live chat, help customers with onboarding.
+  etiquetas:
+  - support
+  relevante: false
+- titulo: Senior Java Developer
+  descripcion: Java 17, Spring Boot, Kafka, microservices on Kubernetes.
+  etiquetas:
+  - java
+  relevante: false
+- titulo: Marketing Manager
+  descripcion: Own campaigns, SEO, paid ads and social media growth.
+  etiquetas:
+  - marketing
+  relevante: false
+- titulo: Embedded Firmware Engineer
+  descripcion: C and C++ firmware for microcontrollers, RTOS, hardware bring-up.
+  etiquetas:
+  - c++
+  relevante: false
+- titulo: Data Analyst
+  descripcion: Dashboards in Tableau, SQL reporting, stakeholder presentations.
+  etiquetas:
+  - data
+  relevante: false
+- titulo: Recruiter, Technical Hiring
+  descripcion: Source and interview engineers, manage hiring pipeline.
+  etiquetas:
+  - hr
+  relevante: false
+- titulo: Blockchain Smart Contract Developer
+  descripcion: Solidity, Ethereum, DeFi protocol audits.
+  etiquetas:
+  - web3
+  relevante: false
+- titulo: Unity Game Developer
+  descripcion: Unity and C# gameplay programming for mobile games.
+  etiquetas:
+  - unity
+  relevante: false
+- titulo: Account Executive
+  descripcion: Close enterprise deals, manage renewals, CRM hygiene.
+  etiquetas:
+  - sales
+  relevante: false
+- titulo: Site Reliability Engineer (Go)
+  descripcion: Go services, Kubernetes, Terraform, on-call rotation.
+  etiquetas:
+  - go
+  - sre
+  relevante: false
