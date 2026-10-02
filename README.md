@@ -10,8 +10,8 @@ agente que busca, clasifica y prepara postulaciones a empleos.
 | 1 | Esquema del CV, plantilla LaTeX, compilación a PDF en Docker | hecha |
 | 2 | Captura de ofertas (Remotive, RemoteOK, We Work Remotely), texto plano, deduplicación, intervalo de 6 h | hecha |
 | 3 | Ranking: reglas duras + embeddings bge-m3 + tecnologías en común, con explicación por oferta | hecha (falta evaluar con tus etiquetas) |
-| 4 | CV adaptado por oferta (el modelo reordena y resalta, **nunca inventa**) | pendiente |
-| 5 | Postulación asistida: borrador listo, la persona confirma y envía | pendiente |
+| 4 | CV adaptado por oferta: el modelo solo elige y ordena, una compuerta verifica contra el YAML | hecha |
+| 5 | Postulación asistida: borrador (CV + carta), seguimiento por estados, nunca envía | hecha (sin interfaz web aún) |
 
 ## Uso
 
@@ -96,3 +96,31 @@ y el conjunto es optimista: no sustituye a ofertas reales etiquetadas por ti.
 **Limitación conocida.** Ofertas con una lista genérica de tecnologías (p. ej. "Senior Data Scientist"
 de Lemon.io, que enumera .NET, Next.js, etc.) puntúan alto por coincidencias que no describen el puesto.
 Solución prevista: ponderar más título y etiquetas que el cuerpo, y calibrar con etiquetas reales.
+
+## CV por oferta (fase 4)
+
+```bash
+.venv/bin/carrera adaptar data/ejemplo.yaml --oferta <id>   # id que imprime `ranking`
+```
+
+El modelo (qwen3:8b, salida JSON con esquema) **no escribe texto**: devuelve qué logros y
+proyectos mostrar y qué tecnologías destacar. `aplicar` descarta índices o nombres que no
+existan y `verificar.problemas` compara el resultado contra el YAML (cargos, fechas, logros,
+tecnologías, educación, resumen). Si el modelo falla o algo no cuadra, se usa el original.
+Tests: modelo mentiroso, modelo caído y oferta con instrucciones.
+
+## Postulación asistida (fase 5)
+
+```bash
+carrera postular crear     --oferta <id> --cv data/cv.local.yaml   # carpeta con cv.pdf, carta.txt, oferta.txt
+carrera postular confirmar --oferta <id>
+carrera postular enviada   --oferta <id>    # lo marcas tú después de aplicar en la web de la oferta
+carrera postular listar
+```
+
+- La **carta es determinista** (plantilla + datos verificados): solo nombra tecnologías que están en
+  tu CV y en la oferta, así que una oferta no puede hacerla afirmar nada falso.
+- Estados `borrador → confirmada → enviada | descartada`; saltarse la confirmación no se permite.
+- **La herramienta no envía nada.** Aplicas tú en la URL de la oferta; así no arriesgas tu cuenta
+  en las plataformas ni envías algo sin revisar.
+- Tu CV real va en `data/cv.local.yaml` (ignorado por git).

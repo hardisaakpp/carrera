@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 import time
+from datetime import datetime
 from pathlib import Path
 
 from .modelo import Oferta
@@ -56,10 +57,17 @@ class Almacen:
         return nuevas
 
     def todas(self) -> list[Oferta]:
+        return self._leer("")
+
+    def buscar(self, prefijo: str) -> Oferta | None:
+        """Una oferta por prefijo de clave (único) o None."""
+        encontradas = self._leer("WHERE clave LIKE ? ESCAPE '\\'", (prefijo.replace("%", "").replace("_", "") + "%",))
+        return encontradas[0] if len(encontradas) == 1 else None
+
+    def _leer(self, filtro: str, params: tuple = ()) -> list[Oferta]:
         filas = self.db.execute(
             "SELECT fuente,id_fuente,url,titulo,empresa,ubicacion,etiquetas,descripcion,publicada "
-            "FROM ofertas ORDER BY publicada DESC").fetchall()
-        from datetime import datetime
+            f"FROM ofertas {filtro} ORDER BY publicada DESC", params).fetchall()
         return [Oferta(fuente=f, id_fuente=i, url=u, titulo=t, empresa=e, ubicacion=ub,
                        etiquetas=[x for x in et.split(",") if x], descripcion=d,
                        publicada=datetime.fromisoformat(p) if p else None)

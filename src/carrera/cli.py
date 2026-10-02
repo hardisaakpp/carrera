@@ -68,8 +68,85 @@ def ranking(argv: list[str]) -> int:
     print(f"{len(vivas)} candidatas, {len(resultados) - len(vivas)} descartadas por reglas")
     for r in vivas[: args.top]:
         o = r.oferta
-        print(f"{r.puntaje:5.1f}  {o.titulo} - {o.empresa}  [{o.fuente}]\n       "
+        print(f"{r.puntaje:5.1f}  {o.titulo} - {o.empresa}  [{o.fuente}] id={o.clave}\n       "
               f"coinciden: {', '.join(r.coinciden) or '-'}\n       {o.url}")
+    return 0
+
+
+def adaptar_cmd(argv: list[str]) -> int:
+    from .adaptacion.adaptar import adaptar
+    from .adaptacion.verificar import problemas
+    from .ofertas.almacen import Almacen
+
+    p = argparse.ArgumentParser(prog="carrera adaptar")
+    p.add_argument("cv", type=Path)
+    p.add_argument("--oferta", required=True, help="id (prefijo de clave) mostrado por `ranking`")
+    p.add_argument("--db", default="data/ofertas.db")
+    p.add_argument("--salida", type=Path, default=Path("build"))
+    p.add_argument("--solo-tex", action="store_true")
+    args = p.parse_args(argv)
+    oferta = Almacen(args.db).buscar(args.oferta)
+    if oferta is None:
+        print("oferta no encontrada o id ambiguo", file=sys.stderr)
+        return 2
+    original = cargar(args.cv)
+    cv = adaptar(original, oferta)
+    assert not problemas(original, cv)  # compuerta final, redundante a propósito
+    args.salida.mkdir(parents=True, exist_ok=True)
+    tex = args.salida / f"cv-{args.oferta}.tex"
+    tex.write_text(renderizar(cv), "utf-8")
+    print(f"{'adaptado' if cv is not original else 'sin cambios (se usó el original)'}: {tex}")
+    if not args.solo_tex:
+        print(compilar(tex))
+    return 0
+
+
+def postular(argv: list[str]) -> int:
+    """`postular crear|confirmar|enviada|descartar|listar`: prepara y sigue, nunca envía."""
+    from .adaptacion.adaptar import adaptar
+    from .ofertas.almacen import Almacen
+    from .postulacion.carta import redactar
+    from .postulacion.registro import Registro, TransicionInvalida
+
+    p = argparse.ArgumentParser(prog="carrera postular")
+    p.add_argument("accion", choices=["crear", "confirmar", "enviada", "descartar", "listar"])
+    p.add_argument("--cv", type=Path, default=Path("data/cv.local.yaml"))
+    p.add_argument("--oferta", help="id (prefijo de clave)")
+    p.add_argument("--db", default="data/ofertas.db")
+    p.add_argument("--salida", type=Path, default=Path("build/postulaciones"))
+    p.add_argument("--solo-tex", action="store_true")
+    args = p.parse_args(argv)
+    almacen = Almacen(args.db)
+    registro = Registro(almacen.db)
+    if args.accion == "listar":
+        for clave, estado, titulo, empresa, url in registro.listar():
+            print(f"{clave}  {estado:<10}  {titulo} - {empresa}\n    {url}")
+        return 0
+    oferta = almacen.buscar(args.oferta or "")
+    if oferta is None:
+        print("indica --oferta con un id único", file=sys.stderr)
+        return 2
+    if args.accion == "crear":
+        original = cargar(args.cv)
+        cv = adaptar(original, oferta)
+        carpeta = args.salida / oferta.clave
+        carpeta.mkdir(parents=True, exist_ok=True)
+        tex = carpeta / "cv.tex"
+        tex.write_text(renderizar(cv), "utf-8")
+        (carpeta / "carta.txt").write_text(redactar(cv, oferta), "utf-8")
+        (carpeta / "oferta.txt").write_text(f"{oferta.titulo} - {oferta.empresa} [{oferta.fuente}]\n{oferta.url}\n", "utf-8")
+        if not args.solo_tex:
+            compilar(tex)
+        registro.crear(oferta.clave, str(carpeta), oferta.titulo, oferta.empresa, oferta.url)
+        print(f"borrador listo en {carpeta}\nRevísalo y aplica tú en: {oferta.url}\nLuego: carrera postular confirmar --oferta {oferta.clave}")
+        return 0
+    nuevo = {"confirmar": "confirmada", "enviada": "enviada", "descartar": "descartada"}[args.accion]
+    try:
+        registro.mover(oferta.clave, nuevo)
+    except (KeyError, TransicionInvalida) as e:
+        print(f"no se pudo: {e}", file=sys.stderr)
+        return 2
+    print(f"{oferta.clave}: {nuevo}")
     return 0
 
 
@@ -77,6 +154,10 @@ def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ["ofertas"]:
         return ofertas(argv[1:])
+    if argv[:1] == ["postular"]:
+        return postular(argv[1:])
+    if argv[:1] == ["adaptar"]:
+        return adaptar_cmd(argv[1:])
     if argv[:1] == ["ranking"]:
         return ranking(argv[1:])
     p = argparse.ArgumentParser(prog="carrera")
